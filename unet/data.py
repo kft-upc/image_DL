@@ -5,7 +5,7 @@ import numpy as np
 from skimage.io import imsave, imread
 from skimage.transform import resize
 
-data_path = '/home/terra/ML/data/fardetect/'
+data_path = '/home/terra/ML/data/nerve/'
 
 image_rows = 256
 image_cols = 256

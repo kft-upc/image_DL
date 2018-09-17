@@ -11,6 +11,7 @@ from keras.callbacks import ModelCheckpoint
 from keras import backend as K
 from keras.utils import multi_gpu_model
 import warnings
+from matplotlib import pyplot as plt
 
 from data import load_train_data, load_test_data
 
@@ -99,11 +100,11 @@ def train():
     imgs_mask_train = preprocess(imgs_mask_train)
     
     imgs_train = imgs_train.astype('float32')
-    mean = np.mean(imgs_train)
-    std = np.std(imgs_train)
+    #mean = np.mean(imgs_train)
+    #std = np.std(imgs_train)
     
-    imgs_train -= mean
-    imgs_train /= std
+    #imgs_train -= mean
+    imgs_train /= 255
     
     imgs_mask_train = imgs_mask_train.astype('float32')
     imgs_mask_train /=255
@@ -163,7 +164,28 @@ def predict():
     for image, image_id in zip(imgs_mask_test, imgs_id_test):
         image = (image[:,:,0] *255.).astype('np.uint8')
         imsave(os.path.join(pred_dir,str(image_id) + '_pred.png'),image)
+
+def resvisual(history):
+    
+    plt.figure(figsize=(8,6))
+    plt.subplot(211)
+    plt.plot(history.history['val_dice_coef'])
+    plt.title('model dice_coef')
+    plt.ylabel('dice_coef')
+    plt.xlabel('epoch')
+    
+    plt.subplot(212)
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    
+    plt.show()
+        
+
+
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
-    hist = train()
+    #hist = train()
+    resvisual(hist)
     #predict()
