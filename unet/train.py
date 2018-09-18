@@ -9,7 +9,7 @@ from keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Conv2DTranspo
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras import backend as K
-from keras.utils import multi_gpu_model
+from keras.utils import multi_gpu_model,plot_model
 import warnings
 from matplotlib import pyplot as plt
 
@@ -21,8 +21,12 @@ img_cols = 256
 img_rows = 256
 
 
-smooth = 1.
+smooth = 0
 
+save_checkpoint = os.path.join(os.getcwd(),'weights','weights_far_1.h5')
+weights_path = os.path.join(os.getcwd(),'weights','weights_nerve_1.h5')
+
+model_save = os.path.join(os.getcwd(),'models','model_far_1.png')
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
@@ -72,9 +76,16 @@ def get_unet():
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same',kernel_initializer='he_normal')(up9)
     conv9 = Conv2D(32, (3, 3), activation='relu', padding='same',kernel_initializer='he_normal')(conv9)
 
-    conv10 = Conv2D(1, (1, 1), activation='sigmoid')(conv9)
+    conv10 = Conv2D(1, (1, 1), activation='sigmoid')(conv9)  
 
     model = Model(inputs=[inputs], outputs=[conv10])
+    
+    model.load_weights(weights_path,by_name=True)
+    
+    for i,layer in enumerate(model.layers):
+        print(i,layer.name)
+        
+    plot_model(model,to_file=model_save,show_shapes = True)
     
     parallele_model = multi_gpu_model(model,gpus=2)    
 
@@ -113,7 +124,7 @@ def train():
     print('Creating and compiling model...')
     print('-'*30)
     model = get_unet()
-    model_checkpoint = ModelCheckpoint('weights.h5', monitor='val_loss', save_best_only=True)
+    model_checkpoint = ModelCheckpoint(save_checkpoint,monitor='val_loss', save_best_only=True)
 
     print('-'*30)
     print('Fitting model...')
@@ -150,7 +161,7 @@ def predict():
     print('-'*30)
     print('Loading saved weights...')
     print('-'*30)
-    model.load_weights('weights.h5')
+    model.load_weights(save_checkpoint)
 
     print('-'*30)
     print('Predicting masks on test data...')
@@ -167,7 +178,7 @@ def predict():
 
 def resvisual(history):
     
-    plt.figure(figsize=(8,6))
+    plt.figure(figsize=(6,12))
     plt.subplot(211)
     plt.plot(history.history['val_dice_coef'])
     plt.title('model dice_coef')
@@ -186,6 +197,6 @@ def resvisual(history):
 
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
-    #hist = train()
+    hist = train()
     resvisual(hist)
     #predict()
